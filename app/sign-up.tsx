@@ -1,6 +1,7 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function SignUpScreen() {
   const { role } = useLocalSearchParams<{ role: string }>();
@@ -8,6 +9,8 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const router = useRouter();
+  const { signIn } = useAuth();
 
   const hasLength = password.length >= 6 && password.length <= 12;
   const hasUpperCase = /[A-Z]/.test(password);
@@ -74,7 +77,12 @@ export default function SignUpScreen() {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.signUpButton} onPress={() => {}}>
+        <TouchableOpacity
+          style={styles.signUpButton}
+          onPress={() => {
+            signIn(displayName || 'User', email, role);
+            router.replace('/(tabs)');
+          }}>
           <Text style={styles.signUpButtonText}>Sign Up</Text>
         </TouchableOpacity>
       </View>

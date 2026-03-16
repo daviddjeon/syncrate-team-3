@@ -1,14 +1,18 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const router = useRouter();
+  const { signIn } = useAuth();
 
   return (
     <View style={styles.container}>
       <View style={styles.topSection}>
-        <TouchableOpacity style={styles.forgotLink} onPress={() => {}}>
+        <TouchableOpacity style={styles.forgotLink} onPress={() => router.push('/forgot-password')}>
           <Text style={styles.forgotText}>Forgot Password</Text>
         </TouchableOpacity>
 
@@ -36,7 +40,12 @@ export default function LoginScreen() {
             />
           </View>
 
-          <TouchableOpacity style={styles.loginButton} onPress={() => {}}>
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={() => {
+              signIn(email || 'User', email);
+              router.replace('/(tabs)');
+            }}>
             <Text style={styles.loginButtonText}>Log In</Text>
           </TouchableOpacity>
         </View>
