@@ -11,37 +11,8 @@ import {
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/auth-context';
-
-interface Position {
-  name: string;
-  count: number;
-}
-
-interface SkuItem {
-  sku: string;
-  num: number;
-  timeScanned: string;
-  scannedBy: string;
-  positions: Position[];
-  picture: string | null;
-  descriptions: string;
-}
-
-// Mock inventory data — will be replaced with real backend
-const MOCK_ITEMS: SkuItem[] = [
-  {
-    sku: 'MWZX88888_B_XL',
-    num: 3,
-    timeScanned: new Date().toISOString(),
-    scannedBy: 'Display Name',
-    positions: [
-      { name: 'Position 1', count: 1 },
-      { name: 'Position 2', count: 3 },
-    ],
-    picture: null,
-    descriptions: '',
-  },
-];
+import { useInventory, SkuItem } from '@/contexts/inventory-context';
+import { useAppTheme } from '@/contexts/theme-context';
 
 // Generate empty placeholder rows for the table
 const PLACEHOLDER_ROWS = Array.from({ length: 20 }, (_, i) => ({
@@ -71,91 +42,132 @@ export default function WorkspaceDetailScreen() {
   }>();
   const router = useRouter();
   const { displayName } = useAuth();
+  const { getItems } = useInventory();
+  const { colors } = useAppTheme();
+  const items = getItems(id || '');
   const [searchQuery, setSearchQuery] = useState('');
   const [infoVisible, setInfoVisible] = useState(false);
   const [selectedSku, setSelectedSku] = useState<SkuItem | null>(null);
+  const [sortVisible, setSortVisible] = useState(false);
+  const [activeSort, setActiveSort] = useState<'sku-asc' | 'sku-desc' | 'num-asc' | 'num-desc' | 'time-asc' | 'time-desc' | null>(null);
 
-  const dataRows = [...MOCK_ITEMS, ...PLACEHOLDER_ROWS];
+  const SORT_OPTIONS: { key: typeof activeSort; label: string }[] = [
+    { key: 'sku-asc', label: 'SKU (A → Z)' },
+    { key: 'sku-desc', label: 'SKU (Z → A)' },
+    { key: 'num-asc', label: 'NUM (Low → High)' },
+    { key: 'num-desc', label: 'NUM (High → Low)' },
+    { key: 'time-asc', label: 'Time (Oldest)' },
+    { key: 'time-desc', label: 'Time (Newest)' },
+  ];
+
+  const getSortedItems = () => {
+    const items2 = [...items];
+    if (activeSort) {
+      items2.sort((a, b) => {
+        if (activeSort === 'sku-asc') return a.sku.localeCompare(b.sku);
+        if (activeSort === 'sku-desc') return b.sku.localeCompare(a.sku);
+        if (activeSort === 'num-asc') return a.num - b.num;
+        if (activeSort === 'num-desc') return b.num - a.num;
+        if (activeSort === 'time-asc') return a.timeScanned.localeCompare(b.timeScanned);
+        if (activeSort === 'time-desc') return b.timeScanned.localeCompare(a.timeScanned);
+        return 0;
+      });
+    }
+    return items2;
+  };
+
+  const dataRows = [...getSortedItems(), ...PLACEHOLDER_ROWS];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Info Modal */}
       <Modal visible={infoVisible} transparent animationType="fade" onRequestClose={() => setInfoVisible(false)}>
-        <Pressable style={styles.modalBackdrop} onPress={() => setInfoVisible(false)}>
-          <View style={styles.infoCard} onStartShouldSetResponder={() => true}>
+        <Pressable style={[styles.modalBackdrop, { backgroundColor: colors.modalBackdrop }]} onPress={() => setInfoVisible(false)}>
+          <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.border }]} onStartShouldSetResponder={() => true}>
             <Text style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Workspace ID:  </Text>
-              <Text style={styles.infoValue}>{id || 'ab123456'}</Text>
+              <Text style={[styles.infoLabel, { color: colors.text }]}>Workspace ID:  </Text>
+              <Text style={[styles.infoValue, { color: colors.textSecondary }]}>{id || 'ab123456'}</Text>
             </Text>
-
             <Text style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Time Created:  </Text>
-              <Text style={styles.infoValue}>{formatDateTime(timeCreated || '')}</Text>
+              <Text style={[styles.infoLabel, { color: colors.text }]}>Time Created:  </Text>
+              <Text style={[styles.infoValue, { color: colors.textSecondary }]}>{formatDateTime(timeCreated || '')}</Text>
             </Text>
-
             <Text style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Created By:   </Text>
-              <Text style={styles.infoValue}>{displayName || 'Display Name'}</Text>
+              <Text style={[styles.infoLabel, { color: colors.text }]}>Created By:   </Text>
+              <Text style={[styles.infoValue, { color: colors.textSecondary }]}>{displayName || 'Display Name'}</Text>
             </Text>
-
             <Text style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Total Earned:  </Text>
-              <Text style={styles.infoValue}>$ 1000</Text>
+              <Text style={[styles.infoLabel, { color: colors.text }]}>Total Earned:  </Text>
+              <Text style={[styles.infoValue, { color: colors.textSecondary }]}>$ 1000</Text>
             </Text>
-
             <View style={styles.infoSection}>
-              <Text style={styles.infoLabel}>Descriptions:</Text>
-              <Text style={styles.infoValue}>{description || ''}</Text>
+              <Text style={[styles.infoLabel, { color: colors.text }]}>Descriptions:</Text>
+              <Text style={[styles.infoValue, { color: colors.textSecondary }]}>{description || ''}</Text>
             </View>
-
             <View style={styles.infoSection}>
-              <Text style={styles.infoLabel}>Retailer:</Text>
-              <Text style={styles.infoValue}>{retailer || ''}</Text>
+              <Text style={[styles.infoLabel, { color: colors.text }]}>Retailer:</Text>
+              <Text style={[styles.infoValue, { color: colors.textSecondary }]}>{retailer || ''}</Text>
             </View>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Sort Modal */}
+      <Modal visible={sortVisible} transparent animationType="fade" onRequestClose={() => setSortVisible(false)}>
+        <Pressable style={[styles.modalBackdrop, { backgroundColor: colors.modalBackdrop }]} onPress={() => setSortVisible(false)}>
+          <View style={[styles.sortCard, { backgroundColor: colors.surface, borderColor: colors.border }]} onStartShouldSetResponder={() => true}>
+            <Text style={[styles.sortCardTitle, { color: colors.text }]}>Sort By</Text>
+            {SORT_OPTIONS.map((opt) => (
+              <TouchableOpacity
+                key={opt.key}
+                style={[styles.sortOptionItem, { backgroundColor: colors.surfaceAlt }, activeSort === opt.key && { backgroundColor: colors.activeSort }]}
+                onPress={() => { setActiveSort(opt.key); setSortVisible(false); }}
+              >
+                <Text style={[styles.sortOptionText, { color: colors.text }, activeSort === opt.key && { color: colors.activeSortText }]}>
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </Pressable>
       </Modal>
 
       {/* SKU Detail Modal */}
       <Modal visible={!!selectedSku} transparent animationType="fade" onRequestClose={() => setSelectedSku(null)}>
-        <Pressable style={styles.modalBackdrop} onPress={() => setSelectedSku(null)}>
-          <View style={styles.skuCard} onStartShouldSetResponder={() => true}>
+        <Pressable style={[styles.modalBackdrop, { backgroundColor: colors.modalBackdrop }]} onPress={() => setSelectedSku(null)}>
+          <View style={[styles.skuCard, { backgroundColor: colors.surface, borderColor: colors.border }]} onStartShouldSetResponder={() => true}>
             <Text style={styles.skuDetailRow}>
-              <Text style={styles.infoLabel}>Time Scanned:  </Text>
-              <Text style={styles.infoValue}>{formatDateTime(selectedSku?.timeScanned || '')}</Text>
+              <Text style={[styles.infoLabel, { color: colors.text }]}>Time Scanned:  </Text>
+              <Text style={[styles.infoValue, { color: colors.textSecondary }]}>{formatDateTime(selectedSku?.timeScanned || '')}</Text>
             </Text>
-
             <Text style={styles.skuDetailRow}>
-              <Text style={styles.infoLabel}>Scanned By:   </Text>
-              <Text style={styles.infoValue}>{selectedSku?.scannedBy || ''}</Text>
+              <Text style={[styles.infoLabel, { color: colors.text }]}>Scanned By:   </Text>
+              <Text style={[styles.infoValue, { color: colors.textSecondary }]}>{selectedSku?.scannedBy || ''}</Text>
             </Text>
-
             <View style={styles.infoSection}>
-              <Text style={styles.infoLabel}>Positions:</Text>
+              <Text style={[styles.infoLabel, { color: colors.text }]}>Positions:</Text>
               {selectedSku?.positions.map((pos, idx) => (
                 <View key={idx} style={styles.positionRow}>
                   <TouchableOpacity onPress={() => { setSelectedSku(null); router.push({ pathname: '/matched-positions', params: { position: pos.name } }); }}>
-                    <Text style={styles.positionName}>{pos.name}:</Text>
+                    <Text style={[styles.positionName, { color: colors.text }]}>{pos.name}:</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.positionBtn}>
-                    <Text style={styles.positionBtnText}>+</Text>
+                  <TouchableOpacity style={[styles.positionBtn, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
+                    <Text style={[styles.positionBtnText, { color: colors.text }]}>+</Text>
                   </TouchableOpacity>
-                  <Text style={styles.positionCount}>{pos.count}</Text>
-                  <TouchableOpacity style={styles.positionBtn}>
-                    <Text style={styles.positionBtnText}>-</Text>
+                  <Text style={[styles.positionCount, { color: colors.text }]}>{pos.count}</Text>
+                  <TouchableOpacity style={[styles.positionBtn, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
+                    <Text style={[styles.positionBtnText, { color: colors.text }]}>-</Text>
                   </TouchableOpacity>
                 </View>
               ))}
             </View>
-
             <View style={styles.infoSection}>
-              <Text style={styles.infoLabel}>Picture:</Text>
-              <View style={styles.pictureBox} />
+              <Text style={[styles.infoLabel, { color: colors.text }]}>Picture:</Text>
+              <View style={[styles.pictureBox, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]} />
             </View>
-
             <View style={styles.infoSection}>
-              <Text style={styles.infoLabel}>Descriptions:</Text>
-              <Text style={styles.infoValue}>{selectedSku?.descriptions || ''}</Text>
+              <Text style={[styles.infoLabel, { color: colors.text }]}>Descriptions:</Text>
+              <Text style={[styles.infoValue, { color: colors.textSecondary }]}>{selectedSku?.descriptions || ''}</Text>
             </View>
           </View>
         </Pressable>
@@ -164,34 +176,34 @@ export default function WorkspaceDetailScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backIcon}>&#8249;</Text>
+          <Text style={[styles.backIcon, { color: colors.icon }]}>&#8249;</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>{name || 'Space Name'}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{name || 'Space Name'}</Text>
         <TouchableOpacity onPress={() => setInfoVisible(true)}>
-          <Text style={styles.headerInfoIcon}>&#9432;</Text>
+          <Text style={[styles.headerInfoIcon, { color: colors.icon }]}>&#9432;</Text>
         </TouchableOpacity>
       </View>
 
       {/* Action Buttons */}
       <View style={styles.actions}>
         <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => router.push({ pathname: '/scanner', params: { spaceName: name } })}>
-          <Text style={styles.actionIcon}>&#128247;</Text>
-          <Text style={styles.actionText}>Start Scanning</Text>
+          style={[styles.actionButton, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
+          onPress={() => router.push({ pathname: '/scanner', params: { spaceName: name, workspaceId: id } })}>
+          <Text style={[styles.actionIcon, { color: colors.textSecondary }]}>&#128247;</Text>
+          <Text style={[styles.actionText, { color: colors.text }]}>Start Scanning</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionIcon}>&#8613;</Text>
-          <Text style={styles.actionText}>Upload CSV</Text>
+        <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
+          <Text style={[styles.actionIcon, { color: colors.textSecondary }]}>&#8613;</Text>
+          <Text style={[styles.actionText, { color: colors.text }]}>Upload CSV</Text>
         </TouchableOpacity>
 
-        <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>Q</Text>
+        <View style={[styles.searchBar, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.searchIcon, { color: colors.textSecondary }]}>Q</Text>
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.text }]}
             placeholder="Search SKU"
-            placeholderTextColor="#888"
+            placeholderTextColor={colors.textSecondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -200,18 +212,18 @@ export default function WorkspaceDetailScreen() {
 
       {/* Sort / Download Row */}
       <View style={styles.toolRow}>
-        <TouchableOpacity style={styles.sortButton}>
-          <Text style={styles.toolText}>&#9776; Sort By</Text>
+        <TouchableOpacity style={styles.sortButton} onPress={() => setSortVisible(true)}>
+          <Text style={[styles.toolText, { color: colors.text }]}>&#9776; Sort By{activeSort ? ` · ${SORT_OPTIONS.find((o) => o.key === activeSort)?.label}` : ''}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.downloadButton}>
-          <Text style={styles.toolText}>Download CSV &#8615;</Text>
+          <Text style={[styles.toolText, { color: colors.text }]}>Download CSV &#8615;</Text>
         </TouchableOpacity>
       </View>
 
       {/* Table Header */}
-      <View style={styles.tableHeader}>
-        <Text style={styles.colHeaderSku}>SKU</Text>
-        <Text style={styles.colHeaderNum}>NUM</Text>
+      <View style={[styles.tableHeader, { borderBottomColor: colors.divider }]}>
+        <Text style={[styles.colHeaderSku, { color: colors.text }]}>SKU</Text>
+        <Text style={[styles.colHeaderNum, { color: colors.text }]}>NUM</Text>
       </View>
 
       {/* Scrollable Table */}
@@ -223,16 +235,16 @@ export default function WorkspaceDetailScreen() {
         style={styles.tableList}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={styles.tableRow}
+            style={[styles.tableRow, { backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]}
             disabled={!item.sku}
             onPress={() => {
               if (item.sku) {
-                const found = MOCK_ITEMS.find((m) => m.sku === item.sku);
+                const found = items.find((m) => m.sku === item.sku);
                 if (found) setSelectedSku(found);
               }
             }}>
-            <Text style={styles.cellSku}>{item.sku}</Text>
-            <Text style={styles.cellNum}>{item.sku ? item.num : ''}</Text>
+            <Text style={[styles.cellSku, { color: colors.text }]}>{item.sku}</Text>
+            <Text style={[styles.cellNum, { color: colors.text }]}>{item.sku ? item.num : ''}</Text>
           </TouchableOpacity>
         )}
       />
@@ -243,7 +255,6 @@ export default function WorkspaceDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F2',
     paddingTop: 56,
   },
   header: {
@@ -255,18 +266,15 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 36,
-    color: '#000',
     fontWeight: '300',
     lineHeight: 36,
   },
   title: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#000',
   },
   headerInfoIcon: {
     fontSize: 24,
-    color: '#000',
   },
   actions: {
     paddingHorizontal: 24,
@@ -277,26 +285,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#D9D9D9',
     borderRadius: 8,
     paddingVertical: 10,
     gap: 8,
     borderWidth: 1,
-    borderColor: '#BBB',
   },
   actionIcon: {
     fontSize: 16,
-    color: '#333',
   },
   actionText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#000',
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8E8E8',
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -304,13 +307,11 @@ const styles = StyleSheet.create({
   },
   searchIcon: {
     fontSize: 16,
-    color: '#888',
     fontWeight: '700',
   },
   searchInput: {
     flex: 1,
     fontSize: 15,
-    color: '#000',
   },
   toolRow: {
     flexDirection: 'row',
@@ -329,7 +330,6 @@ const styles = StyleSheet.create({
   },
   toolText: {
     fontSize: 13,
-    color: '#000',
     textDecorationLine: 'underline',
   },
   tableHeader: {
@@ -337,20 +337,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#999',
   },
   colHeaderSku: {
     flex: 3,
     fontSize: 15,
     fontWeight: '700',
-    color: '#000',
     textAlign: 'center',
   },
   colHeaderNum: {
     flex: 1,
     fontSize: 15,
     fontWeight: '700',
-    color: '#000',
     textAlign: 'center',
   },
   tableList: {
@@ -361,8 +358,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#DDD',
-    backgroundColor: '#E8E8E8',
     marginHorizontal: 4,
     marginTop: 2,
     borderRadius: 4,
@@ -371,29 +366,23 @@ const styles = StyleSheet.create({
   cellSku: {
     flex: 3,
     fontSize: 13,
-    color: '#000',
     textAlign: 'center',
   },
   cellNum: {
     flex: 1,
     fontSize: 13,
-    color: '#000',
     textAlign: 'center',
   },
-  // Info Modal
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   infoCard: {
-    backgroundColor: '#E8E8E8',
     borderRadius: 12,
     padding: 24,
     width: '80%',
     borderWidth: 1,
-    borderColor: '#CCC',
     gap: 12,
   },
   infoRow: {
@@ -402,23 +391,18 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#000',
   },
   infoValue: {
     fontSize: 14,
-    color: '#555',
   },
   infoSection: {
     gap: 2,
   },
-  // SKU Detail Modal
   skuCard: {
-    backgroundColor: '#E8E8E8',
     borderRadius: 12,
     padding: 24,
     width: '85%',
     borderWidth: 1,
-    borderColor: '#CCC',
     gap: 16,
   },
   skuDetailRow: {
@@ -433,38 +417,51 @@ const styles = StyleSheet.create({
   },
   positionName: {
     fontSize: 14,
-    color: '#000',
     width: 90,
   },
   positionBtn: {
     width: 26,
     height: 26,
     borderRadius: 4,
-    backgroundColor: '#D0D0D0',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#AAA',
   },
   positionBtnText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#000',
     lineHeight: 18,
   },
   positionCount: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#000',
     minWidth: 20,
     textAlign: 'center',
   },
   pictureBox: {
     height: 60,
-    backgroundColor: '#D9D9D9',
     borderRadius: 6,
     marginTop: 4,
     borderWidth: 1,
-    borderColor: '#BBB',
+  },
+  sortCard: {
+    borderRadius: 12,
+    padding: 20,
+    width: '70%',
+    borderWidth: 1,
+    gap: 8,
+  },
+  sortCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  sortOptionItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  sortOptionText: {
+    fontSize: 14,
   },
 });

@@ -1,9 +1,11 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useAppTheme } from '@/contexts/theme-context';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
+  const { colors } = useAppTheme();
   const [email, setEmail] = useState('');
   const [securityCode, setSecurityCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -15,54 +17,58 @@ export default function ForgotPasswordScreen() {
   const hasSpecialChar = /[._!]/.test(newPassword);
 
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
+    <ScrollView style={[styles.scroll, { backgroundColor: colors.background }]} contentContainerStyle={styles.container}>
       <TouchableOpacity onPress={() => router.back()}>
-        <Text style={styles.backIcon}>&#8249;</Text>
+        <Text style={[styles.backIcon, { color: colors.text }]}>&#8249;</Text>
       </TouchableOpacity>
 
-      <Text style={styles.title}>Forgot Password</Text>
+      <Text style={[styles.title, { color: colors.text }]}>Forgot Password</Text>
 
       <View style={styles.form}>
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Enter Email</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Enter Email</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.inputBg, color: colors.text }]}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
+            placeholderTextColor={colors.textSecondary}
           />
           <TouchableOpacity>
-            <Text style={styles.linkText}>Get Security Code</Text>
+            <Text style={[styles.linkText, { color: colors.text }]}>Get Security Code</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Enter Security Code</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Enter Security Code</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.inputBg, color: colors.text }]}
             value={securityCode}
             onChangeText={setSecurityCode}
+            placeholderTextColor={colors.textSecondary}
           />
         </View>
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>New Password</Text>
+          <Text style={[styles.label, { color: colors.text }]}>New Password</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.inputBg, color: colors.text }]}
             value={newPassword}
             onChangeText={setNewPassword}
             secureTextEntry
+            placeholderTextColor={colors.textSecondary}
           />
         </View>
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Reenter Password</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Reenter Password</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.inputBg, color: colors.text }]}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
+            placeholderTextColor={colors.textSecondary}
           />
         </View>
 
@@ -81,8 +87,8 @@ export default function ForgotPasswordScreen() {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.resetButton} onPress={() => router.back()}>
-          <Text style={styles.resetButtonText}>Reset Password</Text>
+        <TouchableOpacity style={[styles.resetButton, { backgroundColor: colors.buttonBg }]} onPress={() => router.back()}>
+          <Text style={[styles.resetButtonText, { color: colors.buttonText }]}>Reset Password</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -92,7 +98,6 @@ export default function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
-    backgroundColor: '#F2F2F2',
   },
   container: {
     paddingHorizontal: 30,
@@ -101,7 +106,6 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 36,
-    color: '#000',
     fontWeight: '300',
     lineHeight: 36,
     marginBottom: 10,
@@ -111,7 +115,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
     marginBottom: 40,
-    color: '#000',
   },
   form: {
     gap: 20,
@@ -122,10 +125,8 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000',
   },
   input: {
-    backgroundColor: '#D3D3D3',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 14,
@@ -134,7 +135,6 @@ const styles = StyleSheet.create({
   linkText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#000',
     textDecorationLine: 'underline',
     marginTop: 4,
   },
@@ -153,7 +153,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   resetButton: {
-    backgroundColor: '#C8C8C8',
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
@@ -164,6 +163,5 @@ const styles = StyleSheet.create({
   resetButtonText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFF',
   },
 });

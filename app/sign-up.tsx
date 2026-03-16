@@ -2,6 +2,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
+import { useAppTheme } from '@/contexts/theme-context';
 
 export default function SignUpScreen() {
   const { role } = useLocalSearchParams<{ role: string }>();
@@ -11,6 +12,7 @@ export default function SignUpScreen() {
   const [displayName, setDisplayName] = useState('');
   const router = useRouter();
   const { signIn } = useAuth();
+  const { colors } = useAppTheme();
 
   const hasLength = password.length >= 6 && password.length <= 12;
   const hasUpperCase = /[A-Z]/.test(password);
@@ -18,47 +20,51 @@ export default function SignUpScreen() {
   const hasSpecialChar = /[._!]/.test(password);
 
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Sign Up</Text>
+    <ScrollView style={[styles.scroll, { backgroundColor: colors.background }]} contentContainerStyle={styles.container}>
+      <Text style={[styles.title, { color: colors.text }]}>Sign Up</Text>
 
       <View style={styles.form}>
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Email</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.inputBg, color: colors.text }]}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
+            placeholderTextColor={colors.textSecondary}
           />
         </View>
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Create Password</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Create Password</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.inputBg, color: colors.text }]}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            placeholderTextColor={colors.textSecondary}
           />
         </View>
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Reenter Password</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Reenter Password</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.inputBg, color: colors.text }]}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
+            placeholderTextColor={colors.textSecondary}
           />
         </View>
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Display Name</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Display Name</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.inputBg, color: colors.text }]}
             value={displayName}
             onChangeText={setDisplayName}
+            placeholderTextColor={colors.textSecondary}
           />
         </View>
 
@@ -78,28 +84,28 @@ export default function SignUpScreen() {
         </View>
 
         <TouchableOpacity
-          style={styles.signUpButton}
+          style={[styles.signUpButton, { backgroundColor: colors.buttonBg }]}
           onPress={() => {
             signIn(displayName || 'User', email, role);
             router.replace('/(tabs)');
           }}>
-          <Text style={styles.signUpButtonText}>Sign Up</Text>
+          <Text style={[styles.signUpButtonText, { color: colors.buttonText }]}>Sign Up</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.bottomSection}>
         <View style={styles.dividerContainer}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>OR</Text>
-          <View style={styles.dividerLine} />
+          <View style={[styles.dividerLine, { backgroundColor: colors.divider }]} />
+          <Text style={[styles.dividerText, { color: colors.textSecondary }]}>OR</Text>
+          <View style={[styles.dividerLine, { backgroundColor: colors.divider }]} />
         </View>
 
-        <TouchableOpacity style={styles.googleButton}>
+        <TouchableOpacity style={[styles.googleButton, { backgroundColor: colors.buttonBg }]}>
           <Image
             source={{ uri: 'https://developers.google.com/identity/images/g-logo.png' }}
             style={styles.googleIcon}
           />
-          <Text style={styles.googleButtonText}>Continue with Google</Text>
+          <Text style={[styles.googleButtonText, { color: colors.buttonText }]}>Continue with Google</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -109,11 +115,10 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
-    backgroundColor: '#F2F2F2',
   },
   container: {
     paddingHorizontal: 30,
-    paddingTop: 40,
+    paddingTop: 60,
     paddingBottom: 50,
   },
   title: {
@@ -131,10 +136,8 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000',
   },
   input: {
-    backgroundColor: '#D3D3D3',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 14,
@@ -155,7 +158,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   signUpButton: {
-    backgroundColor: '#C8C8C8',
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
@@ -166,7 +168,6 @@ const styles = StyleSheet.create({
   signUpButtonText: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#000',
   },
   bottomSection: {
     marginTop: 30,
@@ -179,15 +180,12 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#999',
   },
   dividerText: {
     marginHorizontal: 16,
     fontSize: 16,
-    color: '#333',
   },
   googleButton: {
-    backgroundColor: '#C8C8C8',
     paddingVertical: 16,
     borderRadius: 8,
     flexDirection: 'row',
@@ -202,6 +200,5 @@ const styles = StyleSheet.create({
   googleButtonText: {
     fontSize: 20,
     fontWeight: '500',
-    color: '#000',
   },
 });

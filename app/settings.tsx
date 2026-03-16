@@ -2,25 +2,28 @@ import { View, Text, TouchableOpacity, StyleSheet, Switch, ScrollView } from 're
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/auth-context';
+import { useAppTheme } from '@/contexts/theme-context';
 
 interface SettingRowProps {
   label: string;
   description?: string;
   value: boolean;
   onValueChange: (val: boolean) => void;
+  textColor: string;
+  descColor: string;
 }
 
-function SettingRow({ label, description, value, onValueChange }: SettingRowProps) {
+function SettingRow({ label, description, value, onValueChange, textColor, descColor }: SettingRowProps) {
   return (
     <View style={styles.settingRow}>
       <View style={styles.settingInfo}>
-        <Text style={styles.settingLabel}>{label}</Text>
-        {description ? <Text style={styles.settingDesc}>{description}</Text> : null}
+        <Text style={[styles.settingLabel, { color: textColor }]}>{label}</Text>
+        {description ? <Text style={[styles.settingDesc, { color: descColor }]}>{description}</Text> : null}
       </View>
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ false: '#CCC', true: '#333' }}
+        trackColor={{ false: '#CCC', true: '#555' }}
         thumbColor="#FFF"
       />
     </View>
@@ -30,8 +33,8 @@ function SettingRow({ label, description, value, onValueChange }: SettingRowProp
 export default function SettingsScreen() {
   const router = useRouter();
   const { signOut } = useAuth();
+  const { isDark, setDark, colors } = useAppTheme();
 
-  const [darkMode, setDarkMode] = useState(false);
   const [language, setLanguage] = useState(false);
   const [setting1, setSetting1] = useState(false);
   const [setting2, setSetting2] = useState(false);
@@ -39,29 +42,29 @@ export default function SettingsScreen() {
 
   const handleLogOut = () => {
     signOut();
-    router.replace('/');
+    router.replace('/login');
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TouchableOpacity onPress={() => router.back()}>
-        <Text style={styles.menuIcon}>&#9776;</Text>
+        <Text style={[styles.menuIcon, { color: colors.icon }]}>&#9776;</Text>
       </TouchableOpacity>
 
-      <Text style={styles.title}>Settings</Text>
+      <Text style={[styles.title, { color: colors.text }]}>Settings</Text>
 
       <ScrollView style={styles.settingsList} contentContainerStyle={styles.settingsContent}>
-        <SettingRow label="Dark Mode" value={darkMode} onValueChange={setDarkMode} />
-        <SettingRow label="Language" value={language} onValueChange={setLanguage} />
-        <SettingRow label="Label" description="Description" value={setting1} onValueChange={setSetting1} />
-        <SettingRow label="Label" description="Description" value={setting2} onValueChange={setSetting2} />
-        <SettingRow label="Label" description="Description" value={setting3} onValueChange={setSetting3} />
+        <SettingRow label="Dark Mode" value={isDark} onValueChange={setDark} textColor={colors.text} descColor={colors.textSecondary} />
+        <SettingRow label="Language" value={language} onValueChange={setLanguage} textColor={colors.text} descColor={colors.textSecondary} />
+        <SettingRow label="Label" description="Description" value={setting1} onValueChange={setSetting1} textColor={colors.text} descColor={colors.textSecondary} />
+        <SettingRow label="Label" description="Description" value={setting2} onValueChange={setSetting2} textColor={colors.text} descColor={colors.textSecondary} />
+        <SettingRow label="Label" description="Description" value={setting3} onValueChange={setSetting3} textColor={colors.text} descColor={colors.textSecondary} />
       </ScrollView>
 
-      <View style={styles.bottomSection}>
+      <View style={[styles.bottomSection, { borderTopColor: colors.border }]}>
         <TouchableOpacity style={styles.logOutRow} onPress={handleLogOut}>
-          <Text style={styles.logOutIcon}>&#10132;</Text>
-          <Text style={styles.logOutText}>Log Out</Text>
+          <Text style={[styles.logOutIcon, { color: colors.textSecondary }]}>&#10132;</Text>
+          <Text style={[styles.logOutText, { color: colors.text }]}>Log Out</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -71,20 +74,17 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F2',
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 40,
   },
   menuIcon: {
     fontSize: 28,
-    color: '#000',
     marginBottom: 8,
   },
   title: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#000',
     marginBottom: 30,
   },
   settingsList: {
@@ -105,16 +105,13 @@ const styles = StyleSheet.create({
   settingLabel: {
     fontSize: 17,
     fontWeight: '500',
-    color: '#000',
   },
   settingDesc: {
     fontSize: 13,
-    color: '#888',
     marginTop: 2,
   },
   bottomSection: {
     borderTopWidth: 1,
-    borderTopColor: '#CCC',
     paddingTop: 16,
   },
   logOutRow: {
@@ -124,11 +121,9 @@ const styles = StyleSheet.create({
   },
   logOutIcon: {
     fontSize: 20,
-    color: '#333',
   },
   logOutText: {
     fontSize: 17,
     fontWeight: '500',
-    color: '#000',
   },
 });

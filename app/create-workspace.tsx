@@ -9,6 +9,7 @@ import {
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/auth-context';
+import { useAppTheme } from '@/contexts/theme-context';
 
 function formatDateTime(date: Date): string {
   const y = date.getFullYear();
@@ -23,6 +24,7 @@ function formatDateTime(date: Date): string {
 export default function CreateWorkspaceScreen() {
   const router = useRouter();
   const { addSpace } = useAuth();
+  const { colors } = useAppTheme();
 
   const [name, setName] = useState('');
   const [pricePerProduct, setPricePerProduct] = useState('');
@@ -46,79 +48,83 @@ export default function CreateWorkspaceScreen() {
   };
 
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
+    <ScrollView style={[styles.scroll, { backgroundColor: colors.background }]} contentContainerStyle={styles.container}>
+      <Text style={[styles.screenTitle, { color: colors.text }]}>Create New Work Space</Text>
+
       <View style={styles.fieldGroup}>
-        <Text style={styles.label}>
+        <Text style={[styles.label, { color: colors.text }]}>
           Name <Text style={styles.required}>*</Text>
         </Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: colors.surfaceAlt, borderColor: colors.border, color: colors.text }]}
           value={name}
           onChangeText={setName}
-          placeholder=""
+          placeholderTextColor={colors.textSecondary}
         />
       </View>
 
       <View style={styles.priceRow}>
-        <Text style={styles.priceLabel}>$</Text>
+        <Text style={[styles.priceLabel, { color: colors.text }]}>$</Text>
         <TextInput
-          style={styles.priceInput}
+          style={[styles.priceInput, { backgroundColor: colors.surfaceAlt, borderColor: colors.border, color: colors.text }]}
           value={pricePerProduct}
           onChangeText={setPricePerProduct}
           keyboardType="numeric"
-          placeholder=""
+          placeholderTextColor={colors.textSecondary}
         />
-        <Text style={styles.priceDesc}>/ product (organizing)</Text>
+        <Text style={[styles.priceDesc, { color: colors.textSecondary }]}>/ product (organizing)</Text>
       </View>
 
       <View style={styles.priceRow}>
-        <Text style={styles.priceLabel}>$</Text>
+        <Text style={[styles.priceLabel, { color: colors.text }]}>$</Text>
         <TextInput
-          style={styles.priceInput}
+          style={[styles.priceInput, { backgroundColor: colors.surfaceAlt, borderColor: colors.border, color: colors.text }]}
           value={pricePerProductPerDay}
           onChangeText={setPricePerProductPerDay}
           keyboardType="numeric"
-          placeholder=""
+          placeholderTextColor={colors.textSecondary}
         />
-        <Text style={styles.priceDesc}>/ product / day (storage)</Text>
+        <Text style={[styles.priceDesc, { color: colors.textSecondary }]}>/ product / day (storage)</Text>
       </View>
 
       <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Retailer</Text>
+        <Text style={[styles.label, { color: colors.text }]}>Retailer</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: colors.surfaceAlt, borderColor: colors.border, color: colors.text }]}
           value={retailer}
           onChangeText={setRetailer}
+          placeholderTextColor={colors.textSecondary}
         />
       </View>
 
       <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Description</Text>
+        <Text style={[styles.label, { color: colors.text }]}>Description</Text>
         <TextInput
-          style={[styles.input, styles.textArea]}
+          style={[styles.input, styles.textArea, { backgroundColor: colors.surfaceAlt, borderColor: colors.border, color: colors.text }]}
           value={description}
           onChangeText={setDescription}
           multiline
           numberOfLines={4}
+          placeholderTextColor={colors.textSecondary}
         />
       </View>
 
       <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Display Image</Text>
-        <TouchableOpacity style={styles.uploadButton}>
-          <Text style={styles.uploadButtonText}>upload image</Text>
+        <Text style={[styles.label, { color: colors.text }]}>Display Image</Text>
+        <TouchableOpacity style={[styles.uploadButton, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
+          <Text style={[styles.uploadButtonText, { color: colors.textSecondary }]}>upload image</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Time Created</Text>
-        <View style={styles.timeBox}>
-          <Text style={styles.timeText}>{formatDateTime(now)}</Text>
+        <Text style={[styles.label, { color: colors.text }]}>Time Created</Text>
+        <View style={[styles.timeBox, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
+          <Text style={[styles.timeText, { color: colors.text }]}>{formatDateTime(now)}</Text>
         </View>
       </View>
 
-      <TouchableOpacity style={styles.createButton} onPress={handleCreate}>
-        <Text style={styles.createButtonText}>Create</Text>
+      <TouchableOpacity style={[styles.createButton, { backgroundColor: colors.buttonBg }]} onPress={handleCreate}>
+        <Text style={[styles.createButtonText, { color: colors.buttonText }]}>Create</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -127,13 +133,18 @@ export default function CreateWorkspaceScreen() {
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
-    backgroundColor: '#F2F2F2',
   },
   container: {
     paddingHorizontal: 24,
-    paddingTop: 24,
+    paddingTop: 60,
     paddingBottom: 50,
     gap: 20,
+  },
+  screenTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 10,
   },
   fieldGroup: {
     gap: 6,
@@ -141,19 +152,16 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000',
   },
   required: {
     color: '#E53935',
   },
   input: {
-    backgroundColor: '#E0E0E0',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 14,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#CCC',
   },
   textArea: {
     minHeight: 90,
@@ -167,49 +175,38 @@ const styles = StyleSheet.create({
   priceLabel: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000',
   },
   priceInput: {
-    backgroundColor: '#E0E0E0',
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 12,
     fontSize: 16,
     width: 70,
     borderWidth: 1,
-    borderColor: '#CCC',
   },
   priceDesc: {
     fontSize: 14,
-    color: '#555',
   },
   uploadButton: {
-    backgroundColor: '#E0E0E0',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 14,
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: '#CCC',
   },
   uploadButtonText: {
     fontSize: 14,
-    color: '#555',
   },
   timeBox: {
-    backgroundColor: '#E0E0E0',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: '#CCC',
   },
   timeText: {
     fontSize: 16,
-    color: '#000',
   },
   createButton: {
-    backgroundColor: '#C8C8C8',
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
@@ -220,6 +217,5 @@ const styles = StyleSheet.create({
   createButtonText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000',
   },
 });

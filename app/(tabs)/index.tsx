@@ -3,27 +3,29 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/auth-context';
 import { Sidebar } from '@/components/sidebar';
+import { useAppTheme } from '@/contexts/theme-context';
 
 export default function HomeScreen() {
   const { spaces } = useAuth();
   const router = useRouter();
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  const { colors } = useAppTheme();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Sidebar visible={sidebarVisible} onClose={() => setSidebarVisible(false)} />
 
       <View style={styles.header}>
         <TouchableOpacity onPress={() => setSidebarVisible(true)}>
-          <Text style={styles.menuIcon}>&#9776;</Text>
+          <Text style={[styles.menuIcon, { color: colors.icon }]}>&#9776;</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.push('/create-workspace')}>
-          <Text style={styles.addIcon}>+</Text>
+          <Text style={[styles.addIcon, { color: colors.icon }]}>+</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.title}>My Work Spaces</Text>
-      <View style={styles.divider} />
+      <Text style={[styles.title, { color: colors.text }]}>My Work Spaces</Text>
+      <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
       <FlatList
         data={spaces}
@@ -33,7 +35,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.grid}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={styles.spaceCard}
+            style={[styles.spaceCard, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.push({
               pathname: '/workspace-detail',
               params: {
@@ -44,7 +46,7 @@ export default function HomeScreen() {
                 timeCreated: item.timeCreated,
               },
             })}>
-            <Text style={styles.spaceName}>{item.name}</Text>
+            <Text style={[styles.spaceName, { color: colors.text }]}>{item.name}</Text>
           </TouchableOpacity>
         )}
       />
@@ -55,7 +57,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F2',
     paddingHorizontal: 20,
     paddingTop: 60,
   },
@@ -67,22 +68,18 @@ const styles = StyleSheet.create({
   },
   menuIcon: {
     fontSize: 28,
-    color: '#000',
   },
   addIcon: {
     fontSize: 32,
-    color: '#000',
     fontWeight: '300',
   },
   title: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#000',
     marginBottom: 4,
   },
   divider: {
     height: 2,
-    backgroundColor: '#999',
     marginBottom: 20,
   },
   grid: {
@@ -95,16 +92,13 @@ const styles = StyleSheet.create({
   spaceCard: {
     width: '47%',
     aspectRatio: 0.85,
-    backgroundColor: '#C8C8C8',
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#AAA',
   },
   spaceName: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#000',
   },
 });

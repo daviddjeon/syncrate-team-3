@@ -1,34 +1,36 @@
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useAppTheme } from '@/contexts/theme-context';
 
 export default function LandingScreen() {
   const router = useRouter();
+  const { colors } = useAppTheme();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.topSection}>
-        <TouchableOpacity style={styles.button} onPress={() => router.push('/login')}>
-          <Text style={styles.buttonText}>Log In</Text>
+        <TouchableOpacity style={[styles.button, { backgroundColor: colors.buttonBg }]} onPress={() => router.push('/login')}>
+          <Text style={[styles.buttonText, { color: colors.buttonText }]}>Log In</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={() => router.push('/create-account')}>
-          <Text style={styles.buttonText}>Create Account</Text>
+        <TouchableOpacity style={[styles.button, { backgroundColor: colors.buttonBg }]} onPress={() => router.push('/create-account')}>
+          <Text style={[styles.buttonText, { color: colors.buttonText }]}>Create Account</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.bottomSection}>
         <View style={styles.dividerContainer}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>OR</Text>
-          <View style={styles.dividerLine} />
+          <View style={[styles.dividerLine, { backgroundColor: colors.divider }]} />
+          <Text style={[styles.dividerText, { color: colors.textSecondary }]}>OR</Text>
+          <View style={[styles.dividerLine, { backgroundColor: colors.divider }]} />
         </View>
 
-        <TouchableOpacity style={styles.googleButton}>
+        <TouchableOpacity style={[styles.googleButton, { backgroundColor: colors.buttonBg }]}>
           <Image
             source={{ uri: 'https://developers.google.com/identity/images/g-logo.png' }}
             style={styles.googleIcon}
           />
-          <Text style={styles.googleButtonText}>Continue with Google</Text>
+          <Text style={[styles.googleButtonText, { color: colors.buttonText }]}>Continue with Google</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -38,7 +40,6 @@ export default function LandingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F2',
     paddingHorizontal: 30,
     justifyContent: 'space-between',
   },
@@ -48,7 +49,6 @@ const styles = StyleSheet.create({
     gap: 24,
   },
   button: {
-    backgroundColor: '#C8C8C8',
     paddingVertical: 18,
     borderRadius: 8,
     alignItems: 'center',
@@ -56,7 +56,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 22,
     fontWeight: '500',
-    color: '#000',
   },
   bottomSection: {
     paddingBottom: 80,
@@ -69,15 +68,12 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#999',
   },
   dividerText: {
     marginHorizontal: 16,
     fontSize: 16,
-    color: '#333',
   },
   googleButton: {
-    backgroundColor: '#C8C8C8',
     paddingVertical: 16,
     borderRadius: 8,
     flexDirection: 'row',
@@ -92,6 +88,5 @@ const styles = StyleSheet.create({
   googleButtonText: {
     fontSize: 20,
     fontWeight: '500',
-    color: '#000',
   },
 });

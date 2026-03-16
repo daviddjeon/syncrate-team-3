@@ -10,10 +10,16 @@ import { useState, useRef } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
+import { useInventory } from '@/contexts/inventory-context';
+import { useAuth } from '@/contexts/auth-context';
+import { useAppTheme } from '@/contexts/theme-context';
 
 export default function ScannerScreen() {
   const router = useRouter();
-  const { spaceName } = useLocalSearchParams<{ spaceName: string }>();
+  const { spaceName, workspaceId } = useLocalSearchParams<{ spaceName: string; workspaceId: string }>();
+  const { addItem } = useInventory();
+  const { displayName } = useAuth();
+  const { colors } = useAppTheme();
   const [permission, requestPermission] = useCameraPermissions();
   const [scannedCode, setScannedCode] = useState('');
   const [position, setPosition] = useState('');
@@ -22,18 +28,18 @@ export default function ScannerScreen() {
   const cameraRef = useRef<CameraView>(null);
 
   if (!permission) {
-    return <View style={styles.container} />;
+    return <View style={[styles.container, { backgroundColor: colors.background }]} />;
   }
 
   if (!permission.granted) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backIcon}>&#8249;</Text>
+          <Text style={[styles.backIcon, { color: colors.icon }]}>&#8249;</Text>
         </TouchableOpacity>
-        <Text style={styles.permissionText}>Camera permission is required to scan barcodes.</Text>
-        <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
-          <Text style={styles.permissionButtonText}>Grant Permission</Text>
+        <Text style={[styles.permissionText, { color: colors.text }]}>Camera permission is required to scan barcodes.</Text>
+        <TouchableOpacity style={[styles.permissionButton, { backgroundColor: colors.buttonBg }]} onPress={requestPermission}>
+          <Text style={[styles.permissionButtonText, { color: colors.buttonText }]}>Grant Permission</Text>
         </TouchableOpacity>
       </View>
     );
@@ -65,19 +71,28 @@ export default function ScannerScreen() {
   };
 
   const handleAddToInventory = () => {
-    // Will be wired to backend later
+    if (!scannedCode || !workspaceId) return;
+    addItem(workspaceId, {
+      sku: scannedCode,
+      num: 1,
+      timeScanned: new Date().toISOString(),
+      scannedBy: displayName || 'Unknown',
+      positions: position ? [{ name: position, count: 1 }] : [],
+      picture: photo,
+      descriptions: description,
+    });
     router.back();
   };
 
   // Camera scanning view (before barcode is scanned)
   if (!scannedCode) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backIcon}>&#8249;</Text>
+          <Text style={[styles.backIcon, { color: colors.icon }]}>&#8249;</Text>
         </TouchableOpacity>
 
-        <View style={styles.scanArea}>
+        <View style={[styles.scanArea, { borderColor: colors.border }]}>
           <CameraView
             ref={cameraRef}
             style={styles.camera}
@@ -88,54 +103,55 @@ export default function ScannerScreen() {
           />
         </View>
 
-        <Text style={styles.scanHint}>Point camera at a barcode to scan</Text>
+        <Text style={[styles.scanHint, { color: colors.textSecondary }]}>Point camera at a barcode to scan</Text>
       </View>
     );
   }
 
   // Scanned result form view
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.formContainer}>
+    <ScrollView style={[styles.scroll, { backgroundColor: colors.background }]} contentContainerStyle={styles.formContainer}>
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Text style={styles.backIcon}>&#8249;</Text>
+        <Text style={[styles.backIcon, { color: colors.icon }]}>&#8249;</Text>
       </TouchableOpacity>
 
       {/* Scanned SKU */}
-      <View style={styles.skuRow}>
-        <Text style={styles.skuText}>{scannedCode}</Text>
+      <View style={[styles.skuRow, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
+        <Text style={[styles.skuText, { color: colors.text }]}>{scannedCode}</Text>
         <TouchableOpacity onPress={() => setScannedCode('')}>
-          <Text style={styles.editIcon}>&#9998;</Text>
+          <Text style={[styles.editIcon, { color: colors.textSecondary }]}>&#9998;</Text>
         </TouchableOpacity>
       </View>
 
       {/* Add Position */}
-      <Text style={styles.sectionLabel}>Add Position</Text>
+      <Text style={[styles.sectionLabel, { color: colors.text }]}>Add Position</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: colors.surfaceAlt, borderColor: colors.border, color: colors.text }]}
         value={position}
         onChangeText={setPosition}
-        placeholder=""
+        placeholderTextColor={colors.textSecondary}
       />
 
       {/* Add Description */}
-      <Text style={styles.sectionLabel}>Add Description</Text>
+      <Text style={[styles.sectionLabel, { color: colors.text }]}>Add Description</Text>
       <TextInput
-        style={[styles.input, styles.textArea]}
+        style={[styles.input, styles.textArea, { backgroundColor: colors.surfaceAlt, borderColor: colors.border, color: colors.text }]}
         value={description}
         onChangeText={setDescription}
         multiline
         numberOfLines={4}
+        placeholderTextColor={colors.textSecondary}
       />
 
       {/* Add Photo */}
-      <Text style={styles.sectionLabel}>Add Photo</Text>
-      <TouchableOpacity style={styles.photoButton} onPress={handleTakePhoto}>
-        <Text style={styles.photoButtonIcon}>&#128247;</Text>
-        <Text style={styles.photoButtonText}>take photo</Text>
+      <Text style={[styles.sectionLabel, { color: colors.text }]}>Add Photo</Text>
+      <TouchableOpacity style={[styles.photoButton, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]} onPress={handleTakePhoto}>
+        <Text style={[styles.photoButtonIcon, { color: colors.textSecondary }]}>&#128247;</Text>
+        <Text style={[styles.photoButtonText, { color: colors.textSecondary }]}>take photo</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.photoButton} onPress={handleUploadImage}>
-        <Text style={styles.photoButtonIcon}>&#9998;</Text>
-        <Text style={styles.photoButtonText}>upload image</Text>
+      <TouchableOpacity style={[styles.photoButton, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]} onPress={handleUploadImage}>
+        <Text style={[styles.photoButtonIcon, { color: colors.textSecondary }]}>&#9998;</Text>
+        <Text style={[styles.photoButtonText, { color: colors.textSecondary }]}>upload image</Text>
       </TouchableOpacity>
 
       {photo ? (
@@ -143,8 +159,8 @@ export default function ScannerScreen() {
       ) : null}
 
       {/* Add to Inventory */}
-      <TouchableOpacity style={styles.addButton} onPress={handleAddToInventory}>
-        <Text style={styles.addButtonText}>Add to Inventory</Text>
+      <TouchableOpacity style={[styles.addButton, { backgroundColor: colors.buttonBg, borderColor: colors.border }]} onPress={handleAddToInventory}>
+        <Text style={[styles.addButtonText, { color: colors.buttonText }]}>Add to Inventory</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -153,14 +169,12 @@ export default function ScannerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F2',
     paddingHorizontal: 20,
     paddingTop: 56,
     alignItems: 'center',
   },
   scroll: {
     flex: 1,
-    backgroundColor: '#F2F2F2',
   },
   formContainer: {
     paddingHorizontal: 24,
@@ -173,7 +187,6 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 36,
-    color: '#000',
     fontWeight: '300',
     lineHeight: 36,
   },
@@ -181,7 +194,6 @@ const styles = StyleSheet.create({
     width: '90%',
     height: 200,
     borderWidth: 1,
-    borderColor: '#000',
     borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 20,
@@ -191,15 +203,12 @@ const styles = StyleSheet.create({
   },
   scanHint: {
     fontSize: 15,
-    color: '#666',
     marginTop: 10,
   },
-  // Scanned form styles
   skuRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E0E0E0',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 20,
@@ -207,32 +216,26 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#CCC',
   },
   skuText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000',
   },
   editIcon: {
     fontSize: 16,
-    color: '#555',
   },
   sectionLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000',
     marginBottom: 8,
     marginTop: 16,
   },
   input: {
-    backgroundColor: '#E0E0E0',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 14,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#CCC',
   },
   textArea: {
     minHeight: 90,
@@ -241,7 +244,6 @@ const styles = StyleSheet.create({
   photoButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E0E0E0',
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 16,
@@ -249,15 +251,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: '#CCC',
   },
   photoButtonIcon: {
     fontSize: 14,
-    color: '#555',
   },
   photoButtonText: {
     fontSize: 14,
-    color: '#555',
   },
   photoSelected: {
     fontSize: 13,
@@ -266,29 +265,24 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   addButton: {
-    backgroundColor: '#D0D0D0',
     borderRadius: 8,
     paddingVertical: 14,
     paddingHorizontal: 32,
     alignSelf: 'center',
     marginTop: 30,
     borderWidth: 1,
-    borderColor: '#AAA',
   },
   addButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000',
   },
   permissionText: {
     fontSize: 16,
-    color: '#000',
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 20,
   },
   permissionButton: {
-    backgroundColor: '#C8C8C8',
     paddingVertical: 14,
     paddingHorizontal: 30,
     borderRadius: 8,
@@ -296,6 +290,5 @@ const styles = StyleSheet.create({
   permissionButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000',
   },
 });
