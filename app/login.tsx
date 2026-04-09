@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/auth-context';
@@ -7,6 +7,7 @@ import { useAppTheme } from '@/contexts/theme-context';
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { signIn } = useAuth();
   const { colors } = useAppTheme();
@@ -46,11 +47,22 @@ export default function LoginScreen() {
 
           <TouchableOpacity
             style={[styles.loginButton, { backgroundColor: colors.buttonBg }]}
-            onPress={() => {
-              signIn(email ? email.split('@')[0] : 'User', email);
-              router.replace('/(tabs)');
+            disabled={loading}
+            onPress={async () => {
+              if (!email || !password) {
+                Alert.alert('Error', 'Please enter your email and password.');
+                return;
+              }
+              setLoading(true);
+              const error = await signIn(email, password);
+              setLoading(false);
+              if (error) {
+                Alert.alert('Login Failed', error);
+              } else {
+                router.replace('/(tabs)');
+              }
             }}>
-            <Text style={[styles.loginButtonText, { color: colors.buttonText }]}>Log In</Text>
+            <Text style={[styles.loginButtonText, { color: colors.buttonText }]}>{loading ? 'Logging in...' : 'Log In'}</Text>
           </TouchableOpacity>
         </View>
       </View>

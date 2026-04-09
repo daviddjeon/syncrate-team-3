@@ -40,8 +40,8 @@ export default function SettingsScreen() {
   const [setting2, setSetting2] = useState(false);
   const [setting3, setSetting3] = useState(false);
 
-  const handleLogOut = () => {
-    signOut();
+  const handleLogOut = async () => {
+    await signOut();
     router.replace('/login');
   };
 

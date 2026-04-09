@@ -40,9 +40,9 @@ export function Sidebar({ visible, onClose }: SidebarProps) {
     }).start();
   }, [visible, slideAnim]);
 
-  const handleLogOut = () => {
+  const handleLogOut = async () => {
     onClose();
-    signOut();
+    await signOut();
     router.replace('/login');
   };
 

@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { Session } from '@supabase/supabase-js';
 
 export interface Space {
   id: string;
@@ -17,8 +19,9 @@ interface AuthContextType {
   email: string;
   role: string;
   spaces: Space[];
-  signIn: (name: string, email: string, role?: string) => void;
-  signOut: () => void;
+  signIn: (email: string, password: string) => Promise<string | null>;
+  signUp: (email: string, password: string, displayName: string, role: string) => Promise<string | null>;
+  signOut: () => Promise<void>;
   addSpace: (space: Omit<Space, 'id'>) => void;
 }
 
@@ -28,8 +31,9 @@ const AuthContext = createContext<AuthContextType>({
   email: '',
   role: '',
   spaces: [],
-  signIn: () => {},
-  signOut: () => {},
+  signIn: async () => null,
+  signUp: async () => null,
+  signOut: async () => {},
   addSpace: () => {},
 });
 
@@ -40,12 +44,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState('');
   const [spaces, setSpaces] = useState<Space[]>([]);
 
-  const signIn = useCallback((name: string, userEmail: string, userRole?: string) => {
-    setDisplayName(name);
-    setEmail(userEmail);
-    setRole(userRole ?? '');
+  function applySession(session: Session) {
+    const meta = session.user.user_metadata;
     setIsSignedIn(true);
-    // Auto-create a default space if user has none
+    setEmail(session.user.email ?? '');
+    setDisplayName(meta?.display_name ?? session.user.email?.split('@')[0] ?? '');
+    setRole(meta?.role ?? '');
     setSpaces((prev) =>
       prev.length === 0
         ? [{
@@ -60,14 +64,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }]
         : prev
     );
+  }
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) applySession(session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        applySession(session);
+      } else {
+        setIsSignedIn(false);
+        setDisplayName('');
+        setEmail('');
+        setRole('');
+        setSpaces([]);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const signOut = useCallback(() => {
-    setIsSignedIn(false);
-    setDisplayName('');
-    setEmail('');
-    setRole('');
-    setSpaces([]);
+  const signIn = useCallback(async (userEmail: string, password: string): Promise<string | null> => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email: userEmail, password });
+    if (!error && data.session) applySession(data.session);
+    return error ? error.message : null;
+  }, []);
+
+  const signUp = useCallback(async (
+    userEmail: string,
+    password: string,
+    name: string,
+    userRole: string
+  ): Promise<string | null> => {
+    const { data, error } = await supabase.auth.signUp({
+      email: userEmail,
+      password,
+      options: { data: { display_name: name, role: userRole } },
+    });
+    if (!error) {
+      if (data.session) {
+        applySession(data.session);
+      } else {
+        // Email confirmation required — pre-populate display name and email
+        setDisplayName(name);
+        setEmail(userEmail);
+        setRole(userRole);
+      }
+    }
+    return error ? error.message : null;
+  }, []);
+
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
   }, []);
 
   const addSpace = useCallback((space: Omit<Space, 'id'>) => {
@@ -78,8 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider
-      value={{ isSignedIn, displayName, email, role, spaces, signIn, signOut, addSpace }}>
+    <AuthContext.Provider value={{ isSignedIn, displayName, email, role, spaces, signIn, signUp, signOut, addSpace }}>
       {children}
     </AuthContext.Provider>
   );

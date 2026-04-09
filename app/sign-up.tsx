@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
@@ -10,8 +10,9 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signUp } = useAuth();
   const { colors } = useAppTheme();
 
   const hasLength = password.length >= 6 && password.length <= 12;
@@ -85,11 +86,30 @@ export default function SignUpScreen() {
 
         <TouchableOpacity
           style={[styles.signUpButton, { backgroundColor: colors.buttonBg }]}
-          onPress={() => {
-            signIn(displayName || 'User', email, role);
-            router.replace('/(tabs)');
+          disabled={loading}
+          onPress={async () => {
+            if (!email || !password || !displayName) {
+              Alert.alert('Error', 'Please fill in all fields.');
+              return;
+            }
+            if (!hasLength || !hasUpperCase || !hasLowerCase || !hasSpecialChar) {
+              Alert.alert('Error', 'Password does not meet the requirements.');
+              return;
+            }
+            if (password !== confirmPassword) {
+              Alert.alert('Error', 'Passwords do not match.');
+              return;
+            }
+            setLoading(true);
+            const error = await signUp(email, password, displayName, role);
+            setLoading(false);
+            if (error) {
+              Alert.alert('Sign Up Failed', error);
+            } else {
+              router.replace('/(tabs)');
+            }
           }}>
-          <Text style={[styles.signUpButtonText, { color: colors.buttonText }]}>Sign Up</Text>
+          <Text style={[styles.signUpButtonText, { color: colors.buttonText }]}>{loading ? 'Signing up...' : 'Sign Up'}</Text>
         </TouchableOpacity>
       </View>
 

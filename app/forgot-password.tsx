@@ -1,7 +1,8 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAppTheme } from '@/contexts/theme-context';
+import { supabase } from '@/lib/supabase';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -35,7 +36,15 @@ export default function ForgotPasswordScreen() {
             autoCapitalize="none"
             placeholderTextColor={colors.textSecondary}
           />
-          <TouchableOpacity>
+          <TouchableOpacity onPress={async () => {
+            if (!email) { Alert.alert('Error', 'Please enter your email.'); return; }
+            const { error } = await supabase.auth.resetPasswordForEmail(email);
+            if (error) {
+              Alert.alert('Error', error.message);
+            } else {
+              Alert.alert('Check your email', 'A password reset link has been sent to ' + email);
+            }
+          }}>
             <Text style={[styles.linkText, { color: colors.text }]}>Get Security Code</Text>
           </TouchableOpacity>
         </View>
