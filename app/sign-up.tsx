@@ -1,6 +1,7 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/auth-context';
 import { useAppTheme } from '@/contexts/theme-context';
 
@@ -12,7 +13,7 @@ export default function SignUpScreen() {
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { signUp } = useAuth();
+  const { signUp, signInWithGoogle } = useAuth();
   const { colors } = useAppTheme();
 
   const hasLength = password.length >= 6 && password.length <= 12;
@@ -22,6 +23,9 @@ export default function SignUpScreen() {
 
   return (
     <ScrollView style={[styles.scroll, { backgroundColor: colors.background }]} contentContainerStyle={styles.container}>
+      <TouchableOpacity onPress={() => router.back()}>
+        <Ionicons name="chevron-back" size={28} color={colors.text} />
+      </TouchableOpacity>
       <Text style={[styles.title, { color: colors.text }]}>Sign Up</Text>
 
       <View style={styles.form}>
@@ -120,7 +124,19 @@ export default function SignUpScreen() {
           <View style={[styles.dividerLine, { backgroundColor: colors.divider }]} />
         </View>
 
-        <TouchableOpacity style={[styles.googleButton, { backgroundColor: colors.buttonBg }]}>
+        <TouchableOpacity
+          style={[styles.googleButton, { backgroundColor: colors.buttonBg }]}
+          disabled={loading}
+          onPress={async () => {
+            setLoading(true);
+            const error = await signInWithGoogle();
+            setLoading(false);
+            if (!error || error === 'cancelled') {
+              if (error !== 'cancelled') router.replace('/(tabs)');
+            } else {
+              Alert.alert('Google Sign-In Failed', error);
+            }
+          }}>
           <Image
             source={{ uri: 'https://developers.google.com/identity/images/g-logo.png' }}
             style={styles.googleIcon}

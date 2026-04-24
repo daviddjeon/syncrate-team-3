@@ -7,9 +7,11 @@ import {
   FlatList,
   Modal,
   Pressable,
+  Alert,
 } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as DocumentPicker from 'expo-document-picker';
 import { useAuth } from '@/contexts/auth-context';
 import { useInventory, SkuItem } from '@/contexts/inventory-context';
 import { useAppTheme } from '@/contexts/theme-context';
@@ -33,19 +35,26 @@ function formatDateTime(iso: string): string {
 }
 
 export default function WorkspaceDetailScreen() {
-  const { name, id, retailer, description, timeCreated } = useLocalSearchParams<{
+  const { name, id, retailer, description, timeCreated, joinCode, isOwner, createdBy } = useLocalSearchParams<{
     name: string;
     id: string;
     retailer: string;
     description: string;
     timeCreated: string;
+    joinCode: string;
+    isOwner: string;
+    createdBy: string;
   }>();
   const router = useRouter();
-  const { displayName } = useAuth();
-  const { getItems } = useInventory();
+  const { displayName: currentUserName } = useAuth();
+  const { getItems, loadItems } = useInventory();
   const { colors } = useAppTheme();
   const items = getItems(id || '');
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    if (id) loadItems(id);
+  }, [id]);
   const [infoVisible, setInfoVisible] = useState(false);
   const [selectedSku, setSelectedSku] = useState<SkuItem | null>(null);
   const [sortVisible, setSortVisible] = useState(false);
@@ -78,6 +87,43 @@ export default function WorkspaceDetailScreen() {
 
   const dataRows = [...getSortedItems(), ...PLACEHOLDER_ROWS];
 
+  const handleUploadCsv = async () => {
+    const result = await DocumentPicker.getDocumentAsync({ type: 'text/comma-separated-values', copyToCacheDirectory: true });
+    if (result.canceled || !result.assets?.[0]) return;
+
+    try {
+      const text = await fetch(result.assets[0].uri).then((r) => r.text());
+      const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+      if (lines.length < 2) { Alert.alert('Error', 'CSV must have a header row and at least one data row.'); return; }
+
+      const headers = lines[0].toLowerCase().split(',').map((h) => h.trim());
+      const skuIdx = headers.indexOf('sku');
+      const numIdx = headers.indexOf('num');
+      if (skuIdx === -1 || numIdx === -1) { Alert.alert('Error', 'CSV must have "sku" and "num" columns.'); return; }
+
+      let imported = 0;
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',').map((c) => c.trim());
+        const sku = cols[skuIdx];
+        const num = parseInt(cols[numIdx], 10);
+        if (!sku || isNaN(num)) continue;
+        addItem(id!, {
+          sku,
+          num,
+          timeScanned: new Date().toISOString(),
+          scannedBy: currentUserName,
+          positions: [],
+          picture: null,
+          descriptions: '',
+        });
+        imported++;
+      }
+      Alert.alert('Success', `Imported ${imported} item${imported !== 1 ? 's' : ''}.`);
+    } catch {
+      Alert.alert('Error', 'Could not read the file.');
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Info Modal */}
@@ -88,13 +134,19 @@ export default function WorkspaceDetailScreen() {
               <Text style={[styles.infoLabel, { color: colors.text }]}>Workspace ID:  </Text>
               <Text style={[styles.infoValue, { color: colors.textSecondary }]}>{id || 'ab123456'}</Text>
             </Text>
+            {isOwner === '1' && (
+              <Text style={styles.infoRow}>
+                <Text style={[styles.infoLabel, { color: colors.text }]}>Join Code:  </Text>
+                <Text style={[styles.infoValue, { color: colors.textSecondary }]}>{joinCode || '—'}</Text>
+              </Text>
+            )}
             <Text style={styles.infoRow}>
               <Text style={[styles.infoLabel, { color: colors.text }]}>Time Created:  </Text>
               <Text style={[styles.infoValue, { color: colors.textSecondary }]}>{formatDateTime(timeCreated || '')}</Text>
             </Text>
             <Text style={styles.infoRow}>
               <Text style={[styles.infoLabel, { color: colors.text }]}>Created By:   </Text>
-              <Text style={[styles.infoValue, { color: colors.textSecondary }]}>{displayName || 'Display Name'}</Text>
+              <Text style={[styles.infoValue, { color: colors.textSecondary }]}>{createdBy || currentUserName || 'Display Name'}</Text>
             </Text>
             <Text style={styles.infoRow}>
               <Text style={[styles.infoLabel, { color: colors.text }]}>Total Earned:  </Text>
@@ -193,7 +245,7 @@ export default function WorkspaceDetailScreen() {
           <Text style={[styles.actionText, { color: colors.text }]}>Start Scanning</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
+        <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]} onPress={handleUploadCsv}>
           <Text style={[styles.actionIcon, { color: colors.textSecondary }]}>&#8613;</Text>
           <Text style={[styles.actionText, { color: colors.text }]}>Upload CSV</Text>
         </TouchableOpacity>

@@ -1,6 +1,7 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/auth-context';
 import { useAppTheme } from '@/contexts/theme-context';
 
@@ -9,15 +10,20 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const { colors } = useAppTheme();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.topSection}>
-        <TouchableOpacity style={styles.forgotLink} onPress={() => router.push('/forgot-password')}>
-          <Text style={[styles.forgotText, { color: '#4A90D9' }]}>Forgot Password</Text>
-        </TouchableOpacity>
+        <View style={styles.headerRow}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="chevron-back" size={28} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.forgotLink} onPress={() => router.push('/forgot-password')}>
+            <Text style={[styles.forgotText, { color: '#4A90D9' }]}>Forgot Password</Text>
+          </TouchableOpacity>
+        </View>
 
         <Text style={[styles.title, { color: colors.text }]}>Log In</Text>
 
@@ -74,7 +80,19 @@ export default function LoginScreen() {
           <View style={[styles.dividerLine, { backgroundColor: colors.divider }]} />
         </View>
 
-        <TouchableOpacity style={[styles.googleButton, { backgroundColor: colors.buttonBg }]}>
+        <TouchableOpacity
+          style={[styles.googleButton, { backgroundColor: colors.buttonBg }]}
+          disabled={loading}
+          onPress={async () => {
+            setLoading(true);
+            const error = await signInWithGoogle();
+            setLoading(false);
+            if (!error || error === 'cancelled') {
+              if (error !== 'cancelled') router.replace('/(tabs)');
+            } else {
+              Alert.alert('Google Sign-In Failed', error);
+            }
+          }}>
           <Image
             source={{ uri: 'https://developers.google.com/identity/images/g-logo.png' }}
             style={styles.googleIcon}
@@ -94,9 +112,12 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   topSection: {},
-  forgotLink: {
-    alignSelf: 'flex-end',
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
+  forgotLink: {},
   forgotText: {
     fontSize: 16,
     textDecorationLine: 'underline',

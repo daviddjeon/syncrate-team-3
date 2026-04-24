@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/auth-context';
 import { useAppTheme } from '@/contexts/theme-context';
 
@@ -33,9 +34,9 @@ export default function CreateWorkspaceScreen() {
   const [description, setDescription] = useState('');
   const now = new Date();
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!name.trim()) return;
-    addSpace({
+    await addSpace({
       name: name.trim(),
       pricePerProduct,
       pricePerProductPerDay,
@@ -49,6 +50,9 @@ export default function CreateWorkspaceScreen() {
 
   return (
     <ScrollView style={[styles.scroll, { backgroundColor: colors.background }]} contentContainerStyle={styles.container}>
+      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <Ionicons name="chevron-back" size={28} color={colors.text} />
+      </TouchableOpacity>
       <Text style={[styles.screenTitle, { color: colors.text }]}>Create New Work Space</Text>
 
       <View style={styles.fieldGroup}>
@@ -139,6 +143,9 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 50,
     gap: 20,
+  },
+  backButton: {
+    marginBottom: 4,
   },
   screenTitle: {
     fontSize: 22,

@@ -34,7 +34,7 @@ export default function ScannerScreen() {
   if (!permission.granted) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={[styles.backIcon, { color: colors.icon }]}>&#8249;</Text>
         </TouchableOpacity>
         <Text style={[styles.permissionText, { color: colors.text }]}>Camera permission is required to scan barcodes.</Text>

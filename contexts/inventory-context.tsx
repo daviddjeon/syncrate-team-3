@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
 
 export interface Position {
   name: string;
@@ -16,19 +17,18 @@ export interface SkuItem {
 }
 
 interface InventoryContextType {
-  /** Get items for a specific workspace */
   getItems: (workspaceId: string) => SkuItem[];
-  /** Add or merge an item into a workspace's inventory */
   addItem: (workspaceId: string, item: SkuItem) => void;
+  loadItems: (workspaceId: string) => Promise<void>;
 }
 
 const InventoryContext = createContext<InventoryContextType>({
   getItems: () => [],
   addItem: () => {},
+  loadItems: async () => {},
 });
 
 export function InventoryProvider({ children }: { children: React.ReactNode }) {
-  // Map of workspaceId -> SkuItem[]
   const [store, setStore] = useState<Record<string, SkuItem[]>>({});
 
   const getItems = useCallback(
@@ -36,15 +36,36 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     [store],
   );
 
+  const loadItems = useCallback(async (workspaceId: string) => {
+    const { data, error } = await supabase
+      .from('inventory_items')
+      .select('*')
+      .eq('workspace_id', workspaceId);
+
+    if (!error && data) {
+      setStore((prev) => ({
+        ...prev,
+        [workspaceId]: data.map((row) => ({
+          sku: row.sku,
+          num: row.num,
+          timeScanned: row.time_scanned,
+          scannedBy: row.scanned_by ?? '',
+          positions: row.positions ?? [],
+          picture: row.picture ?? null,
+          descriptions: row.descriptions ?? '',
+        })),
+      }));
+    }
+  }, []);
+
   const addItem = useCallback((workspaceId: string, item: SkuItem) => {
+    let mergedItem = item;
+
     setStore((prev) => {
       const existing = prev[workspaceId] ?? [];
-      // If the SKU already exists, increment its count and merge positions
       const idx = existing.findIndex((e) => e.sku === item.sku);
       if (idx >= 0) {
-        const updated = [...existing];
-        const old = updated[idx];
-        // Merge position counts
+        const old = existing[idx];
         const mergedPositions = [...old.positions];
         for (const pos of item.positions) {
           const pIdx = mergedPositions.findIndex((p) => p.name === pos.name);
@@ -57,24 +78,36 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             mergedPositions.push(pos);
           }
         }
-        updated[idx] = {
+        mergedItem = {
           ...old,
           num: old.num + item.num,
           positions: mergedPositions,
-          // Keep newer scan time
           timeScanned: item.timeScanned,
-          // Keep newer photo/description if provided
           picture: item.picture ?? old.picture,
           descriptions: item.descriptions || old.descriptions,
         };
+        const updated = [...existing];
+        updated[idx] = mergedItem;
         return { ...prev, [workspaceId]: updated };
       }
       return { ...prev, [workspaceId]: [...existing, item] };
     });
+
+    // Save to Supabase after local state update
+    supabase.from('inventory_items').upsert({
+      workspace_id: workspaceId,
+      sku: mergedItem.sku,
+      num: mergedItem.num,
+      time_scanned: mergedItem.timeScanned,
+      scanned_by: mergedItem.scannedBy,
+      positions: mergedItem.positions,
+      picture: mergedItem.picture,
+      descriptions: mergedItem.descriptions,
+    }, { onConflict: 'workspace_id,sku' });
   }, []);
 
   return (
-    <InventoryContext.Provider value={{ getItems, addItem }}>
+    <InventoryContext.Provider value={{ getItems, addItem, loadItems }}>
       {children}
     </InventoryContext.Provider>
   );

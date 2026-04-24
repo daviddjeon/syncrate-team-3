@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@/contexts/theme-context';
 
 export default function CreateAccountScreen() {
@@ -8,6 +9,9 @@ export default function CreateAccountScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <Ionicons name="chevron-back" size={28} color={colors.text} />
+      </TouchableOpacity>
       <TouchableOpacity
         style={[styles.roleButton, { backgroundColor: colors.card, borderColor: colors.border }]}
         onPress={() => router.push({ pathname: '/sign-up', params: { role: 'warehouse-owner' } })}
@@ -32,6 +36,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 40,
     gap: 50,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
   },
   roleButton: {
     borderRadius: 16,

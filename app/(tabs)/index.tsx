@@ -44,6 +44,9 @@ export default function HomeScreen() {
                 retailer: item.retailer,
                 description: item.description,
                 timeCreated: item.timeCreated,
+                joinCode: item.joinCode,
+                isOwner: item.isOwner ? '1' : '0',
+                createdBy: item.createdBy,
               },
             })}>
             <Text style={[styles.spaceName, { color: colors.text }]}>{item.name}</Text>
