@@ -5,8 +5,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Alert,
 } from 'react-native';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
@@ -18,7 +19,14 @@ export default function ScannerScreen() {
   const router = useRouter();
   const { spaceName, workspaceId } = useLocalSearchParams<{ spaceName: string; workspaceId: string }>();
   const { addItem } = useInventory();
-  const { displayName } = useAuth();
+  const { displayName, role } = useAuth();
+
+  useEffect(() => {
+    if (role === 'merchant-seller') {
+      Alert.alert('Access Denied', 'Merchants cannot scan items.');
+      router.back();
+    }
+  }, [role]);
   const { colors } = useAppTheme();
   const [permission, requestPermission] = useCameraPermissions();
   const [scannedCode, setScannedCode] = useState('');

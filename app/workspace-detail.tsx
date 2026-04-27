@@ -46,8 +46,8 @@ export default function WorkspaceDetailScreen() {
     createdBy: string;
   }>();
   const router = useRouter();
-  const { displayName: currentUserName } = useAuth();
-  const { getItems, loadItems } = useInventory();
+  const { displayName: currentUserName, role } = useAuth();
+  const { getItems, loadItems, addItem } = useInventory();
   const { colors } = useAppTheme();
   const items = getItems(id || '');
   const [searchQuery, setSearchQuery] = useState('');
@@ -203,13 +203,17 @@ export default function WorkspaceDetailScreen() {
                   <TouchableOpacity onPress={() => { setSelectedSku(null); router.push({ pathname: '/matched-positions', params: { position: pos.name } }); }}>
                     <Text style={[styles.positionName, { color: colors.text }]}>{pos.name}:</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[styles.positionBtn, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
-                    <Text style={[styles.positionBtnText, { color: colors.text }]}>+</Text>
-                  </TouchableOpacity>
+                  {role !== 'merchant-seller' && (
+                    <TouchableOpacity style={[styles.positionBtn, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
+                      <Text style={[styles.positionBtnText, { color: colors.text }]}>+</Text>
+                    </TouchableOpacity>
+                  )}
                   <Text style={[styles.positionCount, { color: colors.text }]}>{pos.count}</Text>
-                  <TouchableOpacity style={[styles.positionBtn, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
-                    <Text style={[styles.positionBtnText, { color: colors.text }]}>-</Text>
-                  </TouchableOpacity>
+                  {role !== 'merchant-seller' && (
+                    <TouchableOpacity style={[styles.positionBtn, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
+                      <Text style={[styles.positionBtnText, { color: colors.text }]}>-</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               ))}
             </View>
@@ -238,17 +242,21 @@ export default function WorkspaceDetailScreen() {
 
       {/* Action Buttons */}
       <View style={styles.actions}>
-        <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
-          onPress={() => router.push({ pathname: '/scanner', params: { spaceName: name, workspaceId: id } })}>
-          <Text style={[styles.actionIcon, { color: colors.textSecondary }]}>&#128247;</Text>
-          <Text style={[styles.actionText, { color: colors.text }]}>Start Scanning</Text>
-        </TouchableOpacity>
+        {role !== 'merchant-seller' && (
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
+            onPress={() => router.push({ pathname: '/scanner', params: { spaceName: name, workspaceId: id } })}>
+            <Text style={[styles.actionIcon, { color: colors.textSecondary }]}>&#128247;</Text>
+            <Text style={[styles.actionText, { color: colors.text }]}>Start Scanning</Text>
+          </TouchableOpacity>
+        )}
 
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]} onPress={handleUploadCsv}>
-          <Text style={[styles.actionIcon, { color: colors.textSecondary }]}>&#8613;</Text>
-          <Text style={[styles.actionText, { color: colors.text }]}>Upload CSV</Text>
-        </TouchableOpacity>
+        {role !== 'merchant-seller' && (
+          <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]} onPress={handleUploadCsv}>
+            <Text style={[styles.actionIcon, { color: colors.textSecondary }]}>&#8613;</Text>
+            <Text style={[styles.actionText, { color: colors.text }]}>Upload CSV</Text>
+          </TouchableOpacity>
+        )}
 
         <View style={[styles.searchBar, { backgroundColor: colors.surface }]}>
           <Text style={[styles.searchIcon, { color: colors.textSecondary }]}>Q</Text>

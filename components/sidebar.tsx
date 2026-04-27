@@ -28,7 +28,7 @@ interface SidebarProps {
 
 export function Sidebar({ visible, onClose }: SidebarProps) {
   const slideAnim = useRef(new Animated.Value(-280)).current;
-  const { displayName, email, signOut } = useAuth();
+  const { displayName, email, signOut, role } = useAuth();
   const { colors } = useAppTheme();
   const router = useRouter();
 
@@ -71,10 +71,12 @@ export function Sidebar({ visible, onClose }: SidebarProps) {
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <View style={styles.menuSection}>
-            <TouchableOpacity style={styles.menuItem} onPress={handleCreateWorkSpace}>
-              <Text style={[styles.menuIcon, { color: colors.text }]}>+</Text>
-              <Text style={[styles.menuText, { color: colors.text }]}>Create Work Space</Text>
-            </TouchableOpacity>
+            {role !== 'merchant-seller' && (
+              <TouchableOpacity style={styles.menuItem} onPress={handleCreateWorkSpace}>
+                <Text style={[styles.menuIcon, { color: colors.text }]}>+</Text>
+                <Text style={[styles.menuText, { color: colors.text }]}>Create Work Space</Text>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity style={styles.menuItem} onPress={handleAllWorkSpaces}>
               <Text style={[styles.menuIcon, { color: colors.text }]}>&#128196;</Text>

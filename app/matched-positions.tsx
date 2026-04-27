@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useAuth } from '@/contexts/auth-context';
 import { useAppTheme } from '@/contexts/theme-context';
 
 interface MatchedRow {
@@ -37,7 +38,9 @@ const SORT_OPTIONS: { key: SortOption; label: string }[] = [
 export default function MatchedPositionsScreen() {
   const router = useRouter();
   const { position } = useLocalSearchParams<{ position: string }>();
+  const { role } = useAuth();
   const { colors } = useAppTheme();
+  const isMerchant = role === 'merchant-seller';
   const [rows, setRows] = useState<MatchedRow[]>(createInitialRows);
   const [sortVisible, setSortVisible] = useState(false);
   const [activeSort, setActiveSort] = useState<SortOption | null>(null);
@@ -120,6 +123,7 @@ export default function MatchedPositionsScreen() {
                 onChangeText={(val) => updateRow(item.id, 'pos', val)}
                 placeholder=""
                 placeholderTextColor={colors.textSecondary}
+                editable={!isMerchant}
               />
               <View style={[styles.cellDivider, { backgroundColor: colors.borderLight }]} />
               <TextInput
@@ -128,6 +132,7 @@ export default function MatchedPositionsScreen() {
                 onChangeText={(val) => updateRow(item.id, 'sku', val)}
                 placeholder="Enter SKU"
                 placeholderTextColor={colors.textSecondary}
+                editable={!isMerchant}
               />
             </View>
           )}

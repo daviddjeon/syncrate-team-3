@@ -6,7 +6,7 @@ import { Sidebar } from '@/components/sidebar';
 import { useAppTheme } from '@/contexts/theme-context';
 
 export default function HomeScreen() {
-  const { spaces } = useAuth();
+  const { spaces, role } = useAuth();
   const router = useRouter();
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const { colors } = useAppTheme();
@@ -19,9 +19,11 @@ export default function HomeScreen() {
         <TouchableOpacity onPress={() => setSidebarVisible(true)}>
           <Text style={[styles.menuIcon, { color: colors.icon }]}>&#9776;</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/create-workspace')}>
-          <Text style={[styles.addIcon, { color: colors.icon }]}>+</Text>
-        </TouchableOpacity>
+        {role !== 'merchant-seller' && (
+          <TouchableOpacity onPress={() => router.push('/create-workspace')}>
+            <Text style={[styles.addIcon, { color: colors.icon }]}>+</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <Text style={[styles.title, { color: colors.text }]}>My Work Spaces</Text>

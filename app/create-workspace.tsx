@@ -5,8 +5,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Alert,
 } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/auth-context';
@@ -24,8 +25,15 @@ function formatDateTime(date: Date): string {
 
 export default function CreateWorkspaceScreen() {
   const router = useRouter();
-  const { addSpace } = useAuth();
+  const { addSpace, role } = useAuth();
   const { colors } = useAppTheme();
+
+  useEffect(() => {
+    if (role === 'merchant-seller') {
+      Alert.alert('Access Denied', 'Only warehouse owners can create workspaces.');
+      router.back();
+    }
+  }, [role]);
 
   const [name, setName] = useState('');
   const [pricePerProduct, setPricePerProduct] = useState('');
